@@ -45,6 +45,7 @@ export default function RootLayout() {
       <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
       <Stack.Screen name="profile" options={{ headerShown: false }} />
       <Stack.Screen name="patient" options={{ headerShown: false }} />
+      <Stack.Screen name="patient-chat" options={{ headerShown: false }} />
     </Stack>
   );
 }

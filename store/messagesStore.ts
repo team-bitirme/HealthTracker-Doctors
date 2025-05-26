@@ -11,12 +11,13 @@ interface MessagesState {
   error: string | null;
   lastMessageId: string | null;
   doctorInfo: { doctor_user_id: string; doctor_name: string } | null;
-  
-  // Actions
-  loadMessages: (userId: string, doctorUserId?: string) => Promise<void>;
-  sendMessage: (content: string, senderUserId: string, receiverUserId: string, messageTypeId?: number) => Promise<void>;
+  patientInfo: { patient_user_id: string; patient_name: string } | null;
+    // Actions
+  loadMessages: (userId: string, otherUserId: string) => Promise<void>;
+  sendMessage: (content: string, senderUserId: string, receiverUserId: string, messageTypeId?: number, onMessageSent?: () => void) => Promise<void>;
   loadMessageTypes: () => Promise<void>;
   loadDoctorInfo: (userId: string) => Promise<void>;
+  loadPatientInfo: (patientUserId: string) => Promise<void>;
   checkForNewMessages: (userId: string) => Promise<boolean>;
   clearMessages: () => void;
   setError: (error: string | null) => void;
@@ -31,22 +32,23 @@ export const useMessagesStore = create<MessagesState>((set, get) => ({
   error: null,
   lastMessageId: null,
   doctorInfo: null,
+  patientInfo: null,
 
   // Actions
-  loadMessages: async (userId: string, doctorUserId?: string) => {
+  loadMessages: async (userId: string, otherUserId: string) => {
     try {
       set({ isLoading: true, error: null });
 
       const response = await messagesService.getMessages({
         user_id: userId,
-        other_user_id: doctorUserId,
+        other_user_id: otherUserId,
         limit: 100
       });
 
       const messageBubbles = await messagesService.convertToMessageBubbles(
         response.messages, 
         userId,
-        get().doctorInfo?.doctor_name
+        get().doctorInfo?.doctor_name || get().patientInfo?.patient_name
       );
 
       const lastMessage = response.messages[response.messages.length - 1];
@@ -64,8 +66,7 @@ export const useMessagesStore = create<MessagesState>((set, get) => ({
       });
     }
   },
-
-  sendMessage: async (content: string, senderUserId: string, receiverUserId: string, messageTypeId = 1) => {
+  sendMessage: async (content: string, senderUserId: string, receiverUserId: string, messageTypeId = 1, onMessageSent?: () => void) => {
     try {
       set({ isSending: true, error: null });
 
@@ -78,7 +79,7 @@ export const useMessagesStore = create<MessagesState>((set, get) => ({
           minute: '2-digit' 
         }),
         isOwn: true,
-        type: 'user',
+        type: 'doctor',
         status: 'sending',
       };
 
@@ -94,7 +95,11 @@ export const useMessagesStore = create<MessagesState>((set, get) => ({
       }, senderUserId);
 
       // Temp mesajı gerçek mesajla değiştir
-      const realMessageBubbles = await messagesService.convertToMessageBubbles([sentMessage], senderUserId, get().doctorInfo?.doctor_name);
+      const realMessageBubbles = await messagesService.convertToMessageBubbles(
+        [sentMessage], 
+        senderUserId, 
+        get().doctorInfo?.doctor_name || get().patientInfo?.patient_name
+      );
       const realMessageBubble = realMessageBubbles[0];
       
       set(state => ({
@@ -106,6 +111,12 @@ export const useMessagesStore = create<MessagesState>((set, get) => ({
         lastMessageId: sentMessage.id,
         isSending: false
       }));
+
+      // Mesaj gönderildikten sonra callback'i çağır
+      if (onMessageSent) {
+        console.log('✅ [MessagesStore] Mesaj gönderildi, yeni mesaj kontrolü yapılıyor...');
+        onMessageSent();
+      }
 
     } catch (error) {
       console.error('Mesaj gönderilirken hata:', error);
@@ -138,6 +149,22 @@ export const useMessagesStore = create<MessagesState>((set, get) => ({
     }
   },
 
+  loadPatientInfo: async (patientUserId: string) => {
+    try {
+      const patient = await messagesService.getPatientByUserId(patientUserId);
+      if (patient) {
+        set({
+          patientInfo: {
+            patient_user_id: patient.user_id || '',
+            patient_name: `${patient.name || ''} ${patient.surname || ''}`.trim()
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Hasta bilgisi yüklenirken hata:', error);
+    }
+  },
+
   checkForNewMessages: async (userId: string) => {
     try {
       const { lastMessageId } = get();
@@ -154,7 +181,8 @@ export const useMessagesStore = create<MessagesState>((set, get) => ({
       messages: [], 
       lastMessageId: null, 
       error: null,
-      doctorInfo: null 
+      doctorInfo: null,
+      patientInfo: null
     });
   },
 
