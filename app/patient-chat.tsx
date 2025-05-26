@@ -31,6 +31,7 @@ export default function HastaMessagesScreen() {
     loadMessageTypes,
     loadPatientInfo,
     patientInfo,
+    markChatAsRead,
     clearMessages,
     setError,
     lastMessageId
@@ -41,10 +42,10 @@ export default function HastaMessagesScreen() {
     onNewMessage: () => {
       console.log('🔔 [Patient-Chat] Yeni mesaj var, mesajlar yeniden yükleniyor...');
       if (user?.id && patientUserId) {
-        loadMessages(user.id, patientUserId);
+        loadMessages(user.id, patientUserId, true);
       }
     }
-  });  // Sayfa focus olduğunda mesaj kontrolü yap
+  });  // Sayfa focus olduğunda mesaj kontrolü yap ve okunmamış mesajları okundu işaretle
   useFocusEffect(
     React.useCallback(() => {
       const checkForNewChatMessages = async () => {
@@ -62,15 +63,19 @@ export default function HastaMessagesScreen() {
           
           if (hasNewMessages) {
             console.log('🔔 [Patient-Chat] Yeni mesaj var, mesajlar yeniden yükleniyor...');
-            loadMessages(user.id, patientUserId);
+            loadMessages(user.id, patientUserId, true);
           }
+
+          // Okunmamış mesajları okundu olarak işaretle
+          await markChatAsRead(user.id, patientUserId);
+          
         } catch (error) {
           console.error('💥 [Patient-Chat] Yeni mesaj kontrolü hatası:', error);
         }
       };
 
-      // Sadece mesajlar en az bir kez yüklenmişse kontrol et
-      if (messages.length > 0 || lastMessageId) {
+      // Mesajlar yüklendikten sonra kontrol et
+      if (user?.id && patientUserId) {
         checkForNewChatMessages();
       }
     }, [user?.id, patientUserId, lastMessageId, messages.length])
@@ -95,8 +100,8 @@ export default function HastaMessagesScreen() {
           await loadPatientInfo(patientUserId);
         }
         
-        // Mesajları yükle
-        await loadMessages(user.id, patientUserId);
+        // Mesajları yükle ve otomatik olarak okundu işaretle
+        await loadMessages(user.id, patientUserId, true);
       } catch (error) {
         console.error('💥 [Patient-Chat] Mesaj sistemi başlatılırken hata:', error);
       }
@@ -137,7 +142,7 @@ export default function HastaMessagesScreen() {
             
             if (hasNewMessages) {
               console.log('🔔 [Patient-Chat] Gönderimden sonra yeni mesaj tespit edildi, yeniden yükleniyor...');
-              loadMessages(user.id, patientUserId);
+              loadMessages(user.id, patientUserId, true);
             }
           } catch (error) {
             console.error('💥 [Patient-Chat] Gönderim sonrası mesaj kontrolü hatası:', error);
@@ -242,7 +247,7 @@ export default function HastaMessagesScreen() {
         refreshing={isLoading}
         onRefresh={() => {
           if (user?.id && patientUserId) {
-            loadMessages(user.id, patientUserId);
+            loadMessages(user.id, patientUserId, true);
           }
         }}
       />

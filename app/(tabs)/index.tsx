@@ -1,9 +1,10 @@
 import React, { useEffect } from 'react';
-import { StyleSheet, View, Text, ScrollView } from 'react-native';
+import { StyleSheet, View, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 
 import { CustomHeader } from '~/components/CustomHeader';
+import { DoctorDashboard } from '~/components/DoctorDashboard';
 import { useAuthStore } from '~/store/authStore';
 import { useProfileStore } from '~/store/profileStore';
 import { useFCMToken } from '~/lib/hooks/useFCMToken';
@@ -41,37 +42,18 @@ export default function AnaSayfa() {
 
   return (
     <SafeAreaView style={styles.container} edges={['left', 'right', 'bottom']}>
-    <CustomHeader userName={userName} />
-      <ScrollView
-        style={styles.scrollView}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollViewContent}>
-        
-        <View style={styles.content}>
-          <View style={styles.welcomeSection}>
-            <Text style={styles.welcomeTitle}>Hoş Geldiniz</Text>
-            <Text style={styles.welcomeDescription}>
-              Hastalarınızın sağlık verilerini takip edebilir ve onlarla iletişim kurabilirsiniz.
-            </Text>
-          </View>
+      <CustomHeader userName={userName} />
+      
+      <View style={styles.content}>
+        {/* <View style={styles.welcomeSection}>
+          <Text style={styles.welcomeTitle}>Hoş Geldiniz</Text>
+          <Text style={styles.welcomeDescription}>
+            Hastalarınızın sağlık verilerini takip edebilir ve onlarla iletişim kurabilirsiniz.
+          </Text>
+        </View> */}
 
-          <View style={styles.quickActions}>
-            <Text style={styles.sectionTitle}>Hızlı Erişim</Text>
-            
-            <View style={styles.actionGrid}>
-              <View style={styles.actionCard}>
-                <Text style={styles.actionTitle}>Hastalar</Text>
-                <Text style={styles.actionDescription}>Hasta listesini görüntüle</Text>
-              </View>
-              
-              <View style={styles.actionCard}>
-                <Text style={styles.actionTitle}>Mesajlar</Text>
-                <Text style={styles.actionDescription}>Hasta mesajlarını kontrol et</Text>
-              </View>
-            </View>
-          </View>
-        </View>
-      </ScrollView>
+        <DoctorDashboard />
+      </View>
     </SafeAreaView>
   );
 }
@@ -81,18 +63,13 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
   },
-  scrollView: {
+  content: {
     flex: 1,
   },
-  scrollViewContent: {
-    padding: 16,
-    paddingBottom: 24,
-  },
-  content: {
-    marginTop: 20,
-  },
   welcomeSection: {
-    marginBottom: 32,
+    marginHorizontal: 16,
+    marginTop: 20,
+    marginBottom: 16,
     padding: 20,
     backgroundColor: '#f8f9fa',
     borderRadius: 12,
@@ -107,42 +84,5 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#666',
     lineHeight: 24,
-  },
-  quickActions: {
-    marginBottom: 24,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 16,
-    color: '#212529',
-  },
-  actionGrid: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: 16,
-  },
-  actionCard: {
-    flex: 1,
-    padding: 20,
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#e9ecef',
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-  },
-  actionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#4263eb',
-    marginBottom: 4,
-  },
-  actionDescription: {
-    fontSize: 14,
-    color: '#666',
   },
 });

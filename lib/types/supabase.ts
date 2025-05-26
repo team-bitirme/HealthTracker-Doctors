@@ -414,6 +414,7 @@ export type Database = {
           created_at: string | null
           id: string
           is_deleted: boolean | null
+          is_read: boolean
           message_type_id: number | null
           receiver_user_id: string | null
           sender_user_id: string | null
@@ -424,6 +425,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           is_deleted?: boolean | null
+          is_read?: boolean
           message_type_id?: number | null
           receiver_user_id?: string | null
           sender_user_id?: string | null
@@ -434,6 +436,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           is_deleted?: boolean | null
+          is_read?: boolean
           message_type_id?: number | null
           receiver_user_id?: string | null
           sender_user_id?: string | null

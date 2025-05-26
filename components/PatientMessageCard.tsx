@@ -13,12 +13,14 @@ interface PatientMessageCardProps {
     content: string;
     created_at: string;
   } | null;
+  unreadCount?: number;
   onPress?: () => void;
 }
 
 export const PatientMessageCard: React.FC<PatientMessageCardProps> = ({
   patient,
   lastMessage,
+  unreadCount = 0,
   onPress,
 }) => {
   const getPatientName = () => {
@@ -75,9 +77,16 @@ export const PatientMessageCard: React.FC<PatientMessageCardProps> = ({
           </Text>
         </View>
 
-        {/* Sağ taraf - Tarih */}
+        {/* Sağ taraf - Tarih ve okunmamış mesaj sayısı */}
         <View style={styles.dateContainer}>
           <Text style={styles.messageDate}>{getLastMessageDate()}</Text>
+          {unreadCount > 0 && (
+            <View style={styles.unreadBadge}>
+              <Text style={styles.unreadCount}>
+                {unreadCount > 99 ? '99+' : unreadCount}
+              </Text>
+            </View>
+          )}
         </View>
       </View>
     </TouchableOpacity>
@@ -124,9 +133,25 @@ const styles = StyleSheet.create({
   },
   dateContainer: {
     alignItems: 'flex-end',
-  },  messageDate: {
+  },
+  messageDate: {
     fontSize: 12,
     color: '#999',
     fontWeight: '500',
+  },
+  unreadBadge: {
+    backgroundColor: '#007AFF',
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  unreadCount: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '600',
+    paddingHorizontal: 6,
   },
 });

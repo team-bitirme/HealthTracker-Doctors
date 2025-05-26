@@ -30,13 +30,7 @@ export default function Hastalar() {
 
   const handleAddPatient = () => {
     console.log('➕ [Hastalar] Hasta ekle butonuna tıklandı');
-    Alert.alert(
-      'Yeni Hasta',
-      'Hasta ekleme sayfası henüz hazırlanmadı.',
-      [{ text: 'Tamam' }]
-    );
-    // TODO: Navigate to add patient page
-    // router.push('/add-patient');
+    router.push('/add-patient');
   };
 
   const renderLoadingState = () => (

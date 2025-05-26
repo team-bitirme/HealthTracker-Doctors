@@ -13,12 +13,13 @@ interface MessagesState {
   doctorInfo: { doctor_user_id: string; doctor_name: string } | null;
   patientInfo: { patient_user_id: string; patient_name: string } | null;
     // Actions
-  loadMessages: (userId: string, otherUserId: string) => Promise<void>;
+  loadMessages: (userId: string, otherUserId: string, autoMarkAsRead?: boolean) => Promise<void>;
   sendMessage: (content: string, senderUserId: string, receiverUserId: string, messageTypeId?: number, onMessageSent?: () => void) => Promise<void>;
   loadMessageTypes: () => Promise<void>;
   loadDoctorInfo: (userId: string) => Promise<void>;
   loadPatientInfo: (patientUserId: string) => Promise<void>;
   checkForNewMessages: (userId: string) => Promise<boolean>;
+  markChatAsRead: (doctorUserId: string, patientUserId: string) => Promise<void>;
   clearMessages: () => void;
   setError: (error: string | null) => void;
 }
@@ -35,7 +36,7 @@ export const useMessagesStore = create<MessagesState>((set, get) => ({
   patientInfo: null,
 
   // Actions
-  loadMessages: async (userId: string, otherUserId: string) => {
+  loadMessages: async (userId: string, otherUserId: string, autoMarkAsRead: boolean = false) => {
     try {
       set({ isLoading: true, error: null });
 
@@ -58,6 +59,15 @@ export const useMessagesStore = create<MessagesState>((set, get) => ({
         lastMessageId: lastMessage?.id || null,
         isLoading: false 
       });
+
+      // Eğer autoMarkAsRead true ise, chat mesajlarını okundu işaretle
+      if (autoMarkAsRead) {
+        try {
+          await messagesService.markChatMessagesAsRead(userId, otherUserId);
+        } catch (markError) {
+          console.error('Mesajları okundu işaretlerken hata:', markError);
+        }
+      }
     } catch (error) {
       console.error('Mesajlar yüklenirken hata:', error);
       set({ 
@@ -173,6 +183,14 @@ export const useMessagesStore = create<MessagesState>((set, get) => ({
     } catch (error) {
       console.error('Yeni mesaj kontrolü yapılırken hata:', error);
       return false;
+    }
+  },
+
+  markChatAsRead: async (doctorUserId: string, patientUserId: string) => {
+    try {
+      await messagesService.markChatMessagesAsRead(doctorUserId, patientUserId);
+    } catch (error) {
+      console.error('Chat mesajlarını okundu işaretlerken hata:', error);
     }
   },
 

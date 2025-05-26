@@ -450,6 +450,105 @@ class MessagesService {
   }
 
   /**
+   * Belirtilen mesajları okundu olarak işaretle
+   */
+  async markMessagesAsRead(messageIds: string[]): Promise<void> {
+    try {
+      if (messageIds.length === 0) {
+        console.log('ℹ️ [MessagesService] Okunacak mesaj bulunamadı');
+        return;
+      }
+
+      console.log('📖 [MessagesService] Mesajlar okundu olarak işaretleniyor...', { 
+        messageCount: messageIds.length 
+      });
+
+      const { error } = await supabase
+        .from('messages')
+        .update({ is_read: true })
+        .in('id', messageIds);
+
+      if (error) {
+        console.error('💥 [MessagesService] Mesajları okundu işaretleme hatası:', error);
+        throw error;
+      }
+
+      console.log('✅ [MessagesService] Mesajlar başarıyla okundu olarak işaretlendi:', {
+        markedMessageCount: messageIds.length
+      });
+    } catch (error) {
+      console.error('💥 [MessagesService] Mesajları okundu işaretlerken hata:', error);
+      throw error instanceof Error ? error : new Error('Mesajlar okundu işaretlenemedi');
+    }
+  }
+
+  /**
+   * Doktor ile hasta arasındaki okunmamış mesajları okundu olarak işaretle
+   */
+  async markChatMessagesAsRead(doctorUserId: string, patientUserId: string): Promise<void> {
+    try {
+      console.log('📖 [MessagesService] Chat mesajları okundu olarak işaretleniyor...', { 
+        doctorUserId, 
+        patientUserId 
+      });
+
+      // Sadece hastadan doktora gelen okunmamış mesajları bul
+      const { data: unreadMessages, error: fetchError } = await supabase
+        .from('messages')
+        .select('id')
+        .eq('sender_user_id', patientUserId)
+        .eq('receiver_user_id', doctorUserId)
+        .eq('is_read', false)
+        .eq('is_deleted', false);
+
+      if (fetchError) {
+        console.error('💥 [MessagesService] Okunmamış mesajları bulma hatası:', fetchError);
+        throw fetchError;
+      }
+
+      if (!unreadMessages || unreadMessages.length === 0) {
+        console.log('ℹ️ [MessagesService] Okunacak mesaj bulunamadı');
+        return;
+      }
+
+      const messageIds = unreadMessages.map(msg => msg.id);
+      await this.markMessagesAsRead(messageIds);
+
+      console.log('✅ [MessagesService] Chat mesajları başarıyla okundu olarak işaretlendi:', {
+        markedMessageCount: messageIds.length
+      });
+    } catch (error) {
+      console.error('💥 [MessagesService] Chat mesajlarını okundu işaretlerken hata:', error);
+      throw error instanceof Error ? error : new Error('Chat mesajları okundu işaretlenemedi');
+    }
+  }
+
+  /**
+   * Doktor için belirli hastadan gelen okunmamış mesaj sayısını getir
+   */
+  async getUnreadMessagesCountForPatient(doctorUserId: string, patientUserId: string): Promise<number> {
+    try {
+      const { count, error } = await supabase
+        .from('messages')
+        .select('id', { count: 'exact' })
+        .eq('sender_user_id', patientUserId)
+        .eq('receiver_user_id', doctorUserId)
+        .eq('is_read', false)
+        .eq('is_deleted', false);
+
+      if (error) {
+        console.error('💥 [MessagesService] Okunmamış mesaj sayısı getirme hatası:', error);
+        return 0;
+      }
+
+      return count || 0;
+    } catch (error) {
+      console.error('💥 [MessagesService] Okunmamış mesaj sayısı getirme hatası:', error);
+      return 0;
+    }
+  }
+
+  /**
    * Doktorun hastalarını son mesajlarıyla birlikte getir
    */
   async getDoctorPatientsWithLastMessages(doctorId: string): Promise<{
@@ -462,6 +561,7 @@ class MessagesService {
       content: string;
       created_at: string;
     } | null;
+    unreadCount?: number;
   }[]> {
     try {
       console.log('📋 [MessagesService] Doktor hastaları ve son mesajları getiriliyor...', { doctorId });
@@ -492,11 +592,21 @@ class MessagesService {
         return [];
       }
 
-      // Her hasta için son mesajı getir
+      // Doktor user_id'sini bul
+      const { data: doctorData, error: doctorError } = await supabase
+        .from('doctors')
+        .select('user_id')
+        .eq('id', doctorId)
+        .single();
+
+      const doctorUserId = doctorData?.user_id;
+
+      // Her hasta için son mesajı ve okunmamış mesaj sayısını getir
       const patientsWithMessages = await Promise.all(
         patientsData.map(async (item: any) => {
           const patient = item.patients;
           let lastMessage = null;
+          let unreadCount = 0;
 
           if (patient.user_id) {
             // Hastanın son mesajını getir
@@ -515,6 +625,11 @@ class MessagesService {
                 created_at: messageData.created_at || '',
               };
             }
+
+            // Doktor user_id'si varsa okunmamış mesaj sayısını getir
+            if (doctorUserId) {
+              unreadCount = await this.getUnreadMessagesCountForPatient(doctorUserId, patient.user_id);
+            }
           }
 
           return {
@@ -524,6 +639,7 @@ class MessagesService {
             gender_name: patient.genders?.name || null,
             user_id: patient.user_id,
             lastMessage,
+            unreadCount,
           };
         })
       );

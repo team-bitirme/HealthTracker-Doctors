@@ -254,7 +254,7 @@ class PatientDetailService {
       'height': 'arrows-v',
       'temperature': 'thermometer-half',
       'pulse': 'heartbeat',
-      'oxygen_saturation': 'lungs',
+      'oxygen_saturation': 'heart',
       'cholesterol': 'flask',
       'hemoglobin': 'tint',
       'bmi': 'calculator'

@@ -20,6 +20,7 @@ interface PatientWithMessage {
     content: string;
     created_at: string;
   } | null;
+  unreadCount?: number;
 }
 
 export default function Mesajlar() {
@@ -128,6 +129,7 @@ export default function Mesajlar() {
     <PatientMessageCard
       patient={item}
       lastMessage={item.lastMessage}
+      unreadCount={item.unreadCount}
       onPress={() => handlePatientPress(item)}
     />
   );
