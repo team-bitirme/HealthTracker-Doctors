@@ -16,21 +16,32 @@ import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { DetailHeader } from '~/components/DetailHeader';
 import { PatientAvatar } from '~/components/PatientAvatar';
 import { DataCategoryList, DataCategory } from '~/components/DataCategoryList';
+import { ComplaintsPreview } from '~/components/ComplaintsPreview';
 // @ts-ignore - Geçici import sorunu
 import { patientDetailService, PatientDetailData } from '~/services/patientDetailService';
 import { doctorService } from '~/services/doctorService';
+import { useComplaintsStore } from '~/store/complaintsStore';
 
 export default function PatientDetail() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  
+
   const [patientData, setPatientData] = useState<PatientDetailData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Şikayet store'u
+  const {
+    complaints,
+    isLoading: complaintsLoading,
+    fetchComplaints,
+    reset: resetComplaints,
+  } = useComplaintsStore();
+
   useEffect(() => {
     if (id) {
       loadPatientData();
+      loadComplaints();
     }
   }, [id]);
 
@@ -39,20 +50,28 @@ export default function PatientDetail() {
       setIsLoading(true);
       setError(null);
       console.log('📋 [PatientDetail] Hasta detayları yükleniyor...', { patientId: id });
-      
+
       const data = await patientDetailService.getPatientDetail(id);
       setPatientData(data);
-      
+
       console.log('✅ [PatientDetail] Hasta detayları başarıyla yüklendi:', {
         patientName: `${data.name} ${data.surname}`,
         hasLastMessage: !!data.lastMessage,
-        categoriesCount: data.healthDataCategories.length
+        categoriesCount: data.healthDataCategories.length,
       });
     } catch (error) {
       console.error('💥 [PatientDetail] Hasta detayları yükleme hatası:', error);
       setError('Hasta detayları yüklenirken bir hata oluştu.');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const loadComplaints = async () => {
+    try {
+      await fetchComplaints(id);
+    } catch (error) {
+      console.error('💥 [PatientDetail] Şikayetler yükleme hatası:', error);
     }
   };
 
@@ -63,28 +82,38 @@ export default function PatientDetail() {
 
   const handleSendMessage = () => {
     console.log('💬 [PatientDetail] Mesaj gönder butonuna tıklandı');
-    Alert.alert(
-      'Mesaj Gönder',
-      'Mesajlaşma özelliği henüz hazırlanmadı.',
-      [{ text: 'Tamam' }]
-    );
+    Alert.alert('Mesaj Gönder', 'Mesajlaşma özelliği henüz hazırlanmadı.', [{ text: 'Tamam' }]);
     // TODO: Navigate to messages page
     // router.push(`/messages/${patientData?.user_id}`);
   };
 
+  const handleAddComplaint = () => {
+    console.log('📝 [PatientDetail] Şikayet ekleme butonuna tıklandı');
+    Alert.alert(
+      'Yeni Şikayet',
+      'Şikayet ekleme özelliği doktor uygulamasında henüz hazırlanmadı. Bu özellik hasta uygulamasından kullanılabilir.',
+      [{ text: 'Tamam' }]
+    );
+  };
+
+  const handleComplaintPress = (complaint: any) => {
+    console.log('📋 [PatientDetail] Şikayet detayına tıklandı:', complaint.id);
+    Alert.alert(
+      'Şikayet Detayı',
+      `Şikayet: ${complaint.description || 'Açıklama yok'}\nKategori: ${complaint.category_name || 'Belirtilmemiş'}\nAlt kategori: ${complaint.subcategory_name || 'Belirtilmemiş'}`,
+      [{ text: 'Tamam' }]
+    );
+  };
+
   const handleCategoryPress = (category: DataCategory) => {
-    console.log('📊 [PatientDetail] Kategori seçildi:', { 
+    console.log('📊 [PatientDetail] Kategori seçildi:', {
       categoryTitle: category.title,
       categoryId: category.id,
-      measurementTypeId: category.measurementTypeId
+      measurementTypeId: category.measurementTypeId,
     });
-    
+
     if (!category.measurementTypeId) {
-      Alert.alert(
-        'Hata',
-        'Ölçüm tipi bilgisi bulunamadı.',
-        [{ text: 'Tamam' }]
-      );
+      Alert.alert('Hata', 'Ölçüm tipi bilgisi bulunamadı.', [{ text: 'Tamam' }]);
       return;
     }
 
@@ -95,8 +124,8 @@ export default function PatientDetail() {
         patientId: id,
         categoryId: category.id,
         categoryTitle: category.title,
-        measurementTypeId: category.measurementTypeId.toString()
-      }
+        measurementTypeId: category.measurementTypeId.toString(),
+      },
     });
   };
 
@@ -120,10 +149,13 @@ export default function PatientDetail() {
   const renderPatientInfo = () => {
     if (!patientData) return null;
 
-    const patientName = `${patientData.name || ''} ${patientData.surname || ''}`.trim() || 'İsim belirtilmemiş';
+    const patientName =
+      `${patientData.name || ''} ${patientData.surname || ''}`.trim() || 'İsim belirtilmemiş';
     const age = patientData.birth_date ? doctorService.calculateAge(patientData.birth_date) : null;
     const gender = doctorService.formatGender(patientData.gender_name);
-    const joinDate = patientData.created_at ? new Date(patientData.created_at).toLocaleDateString('tr-TR') : '';
+    const joinDate = patientData.created_at
+      ? new Date(patientData.created_at).toLocaleDateString('tr-TR')
+      : '';
 
     const getGenderIcon = () => {
       if (gender === 'Erkek') return 'male';
@@ -145,21 +177,21 @@ export default function PatientDetail() {
             <Text style={styles.patientName}>{patientName}</Text>
             <View style={styles.detailsRow}>
               <View style={styles.detail}>
-                <Ionicons 
-                  name={getGenderIcon() as any} 
-                  size={16} 
-                  color={getGenderColor()} 
-                  style={styles.detailIcon} 
+                <Ionicons
+                  name={getGenderIcon() as any}
+                  size={16}
+                  color={getGenderColor()}
+                  style={styles.detailIcon}
                 />
                 <Text style={styles.detailText}>{gender}</Text>
               </View>
               {age && (
                 <View style={styles.detail}>
-                  <Ionicons 
-                    name="calendar-outline" 
-                    size={16} 
-                    color="#FF9800" 
-                    style={styles.detailIcon} 
+                  <Ionicons
+                    name="calendar-outline"
+                    size={16}
+                    color="#FF9800"
+                    style={styles.detailIcon}
                   />
                   <Text style={styles.detailText}>{age} yaş</Text>
                 </View>
@@ -190,7 +222,7 @@ export default function PatientDetail() {
       month: '2-digit',
       year: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
     });
 
     return (
@@ -202,7 +234,7 @@ export default function PatientDetail() {
             <Text style={styles.sendMessageText}>Mesaj Gönder</Text>
           </TouchableOpacity>
         </View>
-        
+
         <View style={styles.messageContent}>
           <Text style={styles.messageText} numberOfLines={3}>
             {patientData.lastMessage.content}
@@ -237,23 +269,32 @@ export default function PatientDetail() {
     );
   };
 
+  const renderComplaints = () => {
+    return (
+      <View style={styles.complaintsContainer}>
+        <ComplaintsPreview
+          complaints={complaints}
+          onAddPress={handleAddComplaint}
+          onComplaintPress={handleComplaintPress}
+        />
+      </View>
+    );
+  };
+
   return (
     <SafeAreaView style={styles.container} edges={['left', 'right', 'bottom']}>
-      <DetailHeader 
-        title="Hasta Detayı" 
-        onBackPress={handleGoBack}
-      />
-      
+      <DetailHeader title="Hasta Detayı" onBackPress={handleGoBack} />
+
       {isLoading && renderLoadingState()}
       {error && !isLoading && renderErrorState()}
       {!isLoading && !error && patientData && (
-        <ScrollView 
+        <ScrollView
           style={styles.scrollView}
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.scrollViewContent}
-        >
+          contentContainerStyle={styles.scrollViewContent}>
           {renderPatientInfo()}
           {renderLastMessage()}
+          {renderComplaints()}
           {renderHealthDataCategories()}
         </ScrollView>
       )}
@@ -474,4 +515,8 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 20,
   },
-}); 
+  complaintsContainer: {
+    marginHorizontal: 16,
+    marginTop: 16,
+  },
+});

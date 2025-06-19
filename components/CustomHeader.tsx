@@ -29,7 +29,10 @@ export function CustomHeader({ userName = 'Kullanıcı', title }: CustomHeaderPr
           <Text style={styles.title}>{title}</Text>
         ) : (
           <>
-            <Text style={styles.greeting}>{/*Merhaba, */}{userName}!</Text>
+            <Text style={styles.greeting}>
+              {/*Merhaba, */}
+              {userName}!
+            </Text>
             <Text style={styles.date}>{getCurrentDate()}</Text>
           </>
         )}
@@ -48,7 +51,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingBottom: 20,
-    backgroundColor: '#fff',
+    backgroundColor: '#f8f9fa',
     minHeight: 150,
   },
   textContainer: {

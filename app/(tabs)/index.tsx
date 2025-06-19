@@ -13,7 +13,7 @@ export default function AnaSayfa() {
   const router = useRouter();
   const { user } = useAuthStore();
   const { profile, fetchProfile } = useProfileStore();
-  
+
   // FCM Token yönetimi
   const { token: fcmToken, isLoading: fcmLoading, error: fcmError } = useFCMToken();
 
@@ -29,10 +29,10 @@ export default function AnaSayfa() {
     if (fcmToken && user?.id) {
       console.log('🔔 FCM Token hazır:', {
         tokenLength: fcmToken.length,
-        userId: user.id
+        userId: user.id,
       });
     }
-    
+
     if (fcmError) {
       console.log('❌ FCM Token hatası:', fcmError);
     }
@@ -43,7 +43,7 @@ export default function AnaSayfa() {
   return (
     <SafeAreaView style={styles.container} edges={['left', 'right', 'bottom']}>
       <CustomHeader userName={userName} />
-      
+
       <View style={styles.content}>
         {/* <View style={styles.welcomeSection}>
           <Text style={styles.welcomeTitle}>Hoş Geldiniz</Text>
@@ -61,7 +61,7 @@ export default function AnaSayfa() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#f8f9fa',
   },
   content: {
     flex: 1,

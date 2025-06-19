@@ -7,22 +7,18 @@ interface PatientAvatarProps {
   style?: any;
 }
 
-export const PatientAvatar: React.FC<PatientAvatarProps> = ({ 
-  gender, 
-  size = 'medium',
-  style 
-}) => {
-  console.log('👤 [PatientAvatar] Avatar render ediliyor:', { gender, size });
+export const PatientAvatar: React.FC<PatientAvatarProps> = ({ gender, size = 'medium', style }) => {
+  // console.log('👤 [PatientAvatar] Avatar render ediliyor:', { gender, size });
 
   const getAvatarSource = () => {
     if (gender === 'Kadın' || gender === 'Female') {
-      console.log('👩 [PatientAvatar] Kadın avatarı seçildi');
+      // console.log('👩 [PatientAvatar] Kadın avatarı seçildi');
       return require('~/assets/default-profile/female.jpg');
     } else if (gender === 'Erkek' || gender === 'Male') {
-      console.log('👨 [PatientAvatar] Erkek avatarı seçildi');
+      // console.log('👨 [PatientAvatar] Erkek avatarı seçildi');
       return require('~/assets/default-profile/male.png');
     } else {
-      console.log('👤 [PatientAvatar] Default avatar seçildi, cinsiyet:', gender);
+      // console.log('👤 [PatientAvatar] Default avatar seçildi, cinsiyet:', gender);
       // Varsayılan olarak erkek avatarını kullan
       return require('~/assets/default-profile/male.png');
     }
@@ -46,11 +42,7 @@ export const PatientAvatar: React.FC<PatientAvatarProps> = ({
 
   return (
     <View style={[styles.container, avatarSize, style]}>
-      <Image
-        source={avatarSource}
-        style={[styles.avatar, avatarSize]}
-        resizeMode="cover"
-      />
+      <Image source={avatarSource} style={[styles.avatar, avatarSize]} resizeMode="cover" />
     </View>
   );
 };
@@ -74,4 +66,4 @@ const styles = StyleSheet.create({
   avatar: {
     backgroundColor: '#f8f9fa',
   },
-}); 
+});

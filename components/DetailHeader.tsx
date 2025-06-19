@@ -29,7 +29,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingBottom: 20,
-    backgroundColor: '#fff',
+    backgroundColor: '#f8f9fa',
     minHeight: 150,
   },
   backButton: {
@@ -46,4 +46,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export { DetailHeader as DataEntryHeader }; 
+export { DetailHeader as DataEntryHeader };
